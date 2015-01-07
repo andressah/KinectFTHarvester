@@ -20,6 +20,7 @@ using Microsoft.Win32;
 using System.Threading;
 
 ///PROTOBUFFER TEST///
+using SilentOrbit;
 //using Example;
 /////////////////////
 
@@ -182,6 +183,7 @@ namespace AwesomeFaceTracking
                 list.Add(p);
             }
             ftf.TrackedPoint = list;
+            oscWriter.Send(new OscElement("/kinect/face", Example.FaceTrackFrame.SerializeToBytes(ftf)));
             ///////////////////////
         }
 
