@@ -19,11 +19,6 @@ using Microsoft.Kinect.Toolkit.FaceTracking;
 using Microsoft.Win32;
 using System.Threading;
 
-///PROTOBUFFER TEST///
-using SilentOrbit;
-//using Example;
-/////////////////////
-
 namespace AwesomeFaceTracking
 {
     /// <summary>
@@ -154,39 +149,21 @@ namespace AwesomeFaceTracking
         void sendToOsc(string line, String channel, UdpWriter oscWriter)
         {
             String[] splitted = line.Split(' ');
+            OscBundle b = new OscBundle(0);
             int i = 0;
             //Remove the Label
             i++;
-            List<OscMessage> l = new List<OscMessage>();
-            //b.AddElement(new OscElement("/" + channel + "/timestamp", splitted[i++]));
-            foreach (FeaturePoint fp in featurePoints)
+            b.AddElement(new OscElement("/" + channel + "/timestamp", splitted[i++]));
+            // splitted.Length - 1 because the linebreak creates one more blank string when splitting
+            for (i = 2; i < splitted.Length - 1; i+=3  )
             {
-                //oscWriter.Send(new OscElement("/debug", 42));
-                oscWriter.Send(new OscElement("/kinect", splitted[i], splitted[i + 1], splitted[i + 2]));
-                i += 3;
+                b.AddElement(new OscElement("/kinect"+ ((i+1)/3).ToString(),
+                    splitted[i],
+                    splitted[i + 1],
+                    splitted[i + 2])
+                    );
             }
-            //oscWriter.Send(new OscBundle(DateTime.Now, l[1], l[2], l[3]));
-
-            
-
-            ///PROTOTEST///
-            i = 0;
-            Example.FaceTrackFrame ftf = new Example.FaceTrackFrame();
-            List<Example.Point> list = new List<Example.Point>();
-                        
-            ftf.Label = splitted[i++];
-            ftf.Timestamp = long.Parse(splitted[i++]);
-            foreach (FeaturePoint fp in featurePoints)
-            {
-                Example.Point p = new Example.Point();
-                p.X = double.Parse(splitted[i++]);
-                p.Y = double.Parse(splitted[i++]);
-                p.Z = double.Parse(splitted[i++]);
-                list.Add(p);
-            }
-            ftf.TrackedPoint = list;
-            //oscWriter.Send(new OscElement("/kinect/face", Example.FaceTrackFrame.SerializeToBytes(ftf)));
-            ///////////////////////
+            oscWriter.Send(b);
         }
 
 
@@ -370,13 +347,12 @@ namespace AwesomeFaceTracking
                 .Select(x => new float[3] { x.X, x.Y, x.Z })
                 .ToArray();
 
-            OscBundle b = new OscBundle((ulong) t.TotalMilliseconds);
+            OscBundle b = new OscBundle(0);
             int i = 0;
             foreach (var v in shape)
             {
                 var el = new OscElement("/kinect" + i++, v.X, v.Y, v.Z);
                 b.AddElement(el);
-                //oscWriter.Send(el);
 
             }
             oscWriter.Send(b);
