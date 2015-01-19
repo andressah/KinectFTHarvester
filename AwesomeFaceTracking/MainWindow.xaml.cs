@@ -149,19 +149,21 @@ namespace AwesomeFaceTracking
         void sendToOsc(string line, String channel, UdpWriter oscWriter)
         {
             String[] splitted = line.Split(' ');
+            OscBundle b = new OscBundle(0);
             int i = 0;
             //Remove the Label
             i++;
-            OscBundle b = new OscBundle();
             b.AddElement(new OscElement("/" + channel + "/timestamp", splitted[i++]));
-            foreach (FeaturePoint fp in featurePoints)
+            // splitted.Length - 1 because the linebreak creates one more blank string when splitting
+            for (i = 2; i < splitted.Length - 1; i+=3  )
             {
-                b.AddElement(new OscElement("/" + channel + "/" + fp.ToString() + "/x", splitted[i++]));
-                b.AddElement(new OscElement("/" + channel + "/" + fp.ToString() + "/y", splitted[i++]));
-                b.AddElement(new OscElement("/" + channel + "/" + fp.ToString() + "/z", splitted[i++]));
+                b.AddElement(new OscElement("/kinect"+ ((i+1)/3).ToString(),
+                    splitted[i],
+                    splitted[i + 1],
+                    splitted[i + 2])
+                    );
             }
             oscWriter.Send(b);
-
         }
 
 
@@ -320,12 +322,16 @@ namespace AwesomeFaceTracking
                 data_string += time + " ";
                 
                 EnumIndexableCollection<FeaturePoint, Vector3DF> shapePoints = faceFrame.Get3DShape();
+                var shape = faceFrame.Get3DShape();
+                float[][] arr = shape
+                    .Select(x => new float[3] { x.X, x.Y, x.Z })
+                    .ToArray();
 
-                foreach (FeaturePoint fp in featurePoints)
+                foreach (var v in arr)
                 {
-                    data_string += shapePoints[fp].X + " ";
-                    data_string += shapePoints[fp].Y + " ";
-                    data_string += shapePoints[fp].Z + " ";
+                    data_string += v[0] + " ";
+                    data_string += v[1] + " ";
+                    data_string += v[2] + " ";
                 }
                 file.WriteLine(data_string);
             }
@@ -333,39 +339,23 @@ namespace AwesomeFaceTracking
 
         public void sendOsc(string channel, FaceTrackFrame faceFrame, UdpWriter oscWriter)
         {
-            EnumIndexableCollection<FeaturePoint, Vector3DF> shapePoints = faceFrame.Get3DShape();
-            /*
-            Console.Out.WriteLine("Bottom: " + faceFrame.FaceRect.Bottom);
-            Console.Out.WriteLine("Top: " + faceFrame.FaceRect.Top);*/
-
-
-            /*var s = new Dictionary<FeaturePoint, Vector3DF>();
-            foreach (FeaturePoint fp in featurePoints)
-            {
-                s.Add(fp, shapePoints[fp]);
-            }
-            string json = JsonConvert.SerializeObject(s, Formatting.Indented);
-            Console.Out.Write(json);*/
             TimeSpan t = DateTime.UtcNow - new DateTime(1970, 1, 1);
             String time = ((long) t.TotalMilliseconds).ToString();
 
-            OscBundle b = new OscBundle((ulong) t.TotalMilliseconds);
-            b.AddElement(new OscElement("/" + channel + "/timestamp", time));
-            foreach (FeaturePoint fp in featurePoints)
+            var shape = faceFrame.Get3DShape();
+            float[][] arr = shape
+                .Select(x => new float[3] { x.X, x.Y, x.Z })
+                .ToArray();
+
+            OscBundle b = new OscBundle(0);
+            int i = 0;
+            foreach (var v in shape)
             {
-                b.AddElement(new OscElement("/" + channel + "/" + fp.ToString() + "/x", shapePoints[fp].X));
-                b.AddElement(new OscElement("/" + channel + "/" + fp.ToString() + "/y", shapePoints[fp].Y));
-                b.AddElement(new OscElement("/" + channel + "/" + fp.ToString() + "/z", shapePoints[fp].Z));
+                var el = new OscElement("/kinect" + i++, v.X, v.Y, v.Z);
+                b.AddElement(el);
+
             }
             oscWriter.Send(b);
-            /*oscWriter.Send(new OscElement("/" + channel + "/timestamp" , time));
-            foreach (FeaturePoint fp in featurePoints)
-            {
-                oscWriter.Send(new OscElement("/" + channel + "/" + fp.ToString() + "/x", shapePoints[fp].X));
-                oscWriter.Send(new OscElement("/" + channel + "/" + fp.ToString() + "/y", shapePoints[fp].Y));
-                oscWriter.Send(new OscElement("/" + channel + "/" + fp.ToString() + "/z", shapePoints[fp].Z));   
-            }*/
-            
         }
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
