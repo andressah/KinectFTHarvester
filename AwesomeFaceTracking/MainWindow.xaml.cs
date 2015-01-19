@@ -157,15 +157,17 @@ namespace AwesomeFaceTracking
             int i = 0;
             //Remove the Label
             i++;
-            OscBundle b = new OscBundle();
-            b.AddElement(new OscElement("/" + channel + "/timestamp", splitted[i++]));
+            List<OscMessage> l = new List<OscMessage>();
+            //b.AddElement(new OscElement("/" + channel + "/timestamp", splitted[i++]));
             foreach (FeaturePoint fp in featurePoints)
             {
                 //oscWriter.Send(new OscElement("/debug", 42));
-                oscWriter.Send(new OscElement("/" + channel + "/" + fp.ToString() + "/x", splitted[i++]));
-                oscWriter.Send(new OscElement("/" + channel + "/" + fp.ToString() + "/y", splitted[i++]));
-                oscWriter.Send(new OscElement("/" + channel + "/" + fp.ToString() + "/z", splitted[i++]));
+                oscWriter.Send(new OscElement("/kinect", splitted[i], splitted[i + 1], splitted[i + 2]));
+                i += 3;
             }
+            //oscWriter.Send(new OscBundle(DateTime.Now, l[1], l[2], l[3]));
+
+            
 
             ///PROTOTEST///
             i = 0;
@@ -183,7 +185,7 @@ namespace AwesomeFaceTracking
                 list.Add(p);
             }
             ftf.TrackedPoint = list;
-            oscWriter.Send(new OscElement("/kinect/face", Example.FaceTrackFrame.SerializeToBytes(ftf)));
+            //oscWriter.Send(new OscElement("/kinect/face", Example.FaceTrackFrame.SerializeToBytes(ftf)));
             ///////////////////////
         }
 
